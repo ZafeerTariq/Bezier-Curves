@@ -23,6 +23,10 @@ public:
 		}
 		return b;
 	}
+
+	void reset() {
+		t = 0;
+	}
 };
 
 #endif

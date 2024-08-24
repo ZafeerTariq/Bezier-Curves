@@ -13,9 +13,16 @@
 #define SCREEN_WIDTH 1600
 #define SCREEN_HEIGHT 900
 
-#define num_points 5
+#define num_points 3
 
 enum Direction { forward, backward };
+
+sf::Vector2f lerp( sf::Vector2f a, sf::Vector2f b, float t ) {
+	return sf::Vector2f(
+		a.x + ( b.x - a.x ) * t,
+		a.y + ( b.y - a.y ) * t
+	);
+}
 
 class Bezier {
 private:
@@ -30,6 +37,9 @@ private:
 	Point *moving;
 	Lerp<sf::Vector2f> *forwards;
 	Lerp<sf::Vector2f> *backwards;
+
+	Point bezier;
+	Lerp<sf::Vector2f> bezierLerp;
 
 	bool showMoving = true;
 
@@ -47,16 +57,18 @@ public:
 		dir = Direction::forward;
 
 		points[0] = Point( sf::Vector2f( 400, 450 ), 10 );
-		points[1] = Point( sf::Vector2f( 600, 350 ), 10 );
-		points[2] = Point( sf::Vector2f( 800, 250 ), 10 );
-		points[3] = Point( sf::Vector2f( 1000, 350 ), 10 );
-		points[4] = Point( sf::Vector2f( 1200, 450 ), 10 );
+		//points[1] = Point( sf::Vector2f( 600, 350 ), 10 );
+		points[1] = Point( sf::Vector2f( 800, 250 ), 10 );
+		//points[3] = Point( sf::Vector2f( 1000, 350 ), 10 );
+		points[2] = Point( sf::Vector2f( 1200, 450 ), 10 );
 
 		for( size_t i = 0; i < num_points - 1; i++ ) {
-			moving[i] = Point( points[i].circle.getPosition(), 25 );
+			moving[i] = Point( points[i].circle.getPosition(), 15 );
 			forwards[i]  = Lerp<sf::Vector2f>( points[i].circle.getPosition(), points[i + 1].circle.getPosition() );
 			backwards[i] = Lerp<sf::Vector2f>( points[i + 1].circle.getPosition(), points[i].circle.getPosition() );
 		}
+
+		bezier = Point( points[0].circle.getPosition(), 25 );
 	}
 
 	void run() {
@@ -99,25 +111,40 @@ private:
 		if( sf::Keyboard::isKeyPressed( sf::Keyboard::Space ) && !move || move ) {
 			move = true;
 
-			if( dir == Direction::forward ) {
-				for (size_t i = 0; i < num_points - 1; i++) {
-					moving[i].circle.setPosition( forwards[i].update( deltaTime.asSeconds() ) );
+			for ( size_t i = 0; i < num_points - 1; i++ ) {
+				if( dir == Direction::forward ) {
+					moving[i].circle.setPosition( forwards[i].update( dt ) );
 					if( forwards[i].isComplete() ) {
 						move = false;
 						forwards[i].reset();
+						bezierLerp.reset();
 						dir = Direction::backward;
 					}
 				}
-			}
-			else if( dir == Direction::backward ) {
-				for (size_t i = 0; i < num_points - 1; i++) {
-					moving[i].circle.setPosition( backwards[i].update( deltaTime.asSeconds() ) );
+				else if( dir == Direction::backward ) {
+					moving[i].circle.setPosition( backwards[i].update( dt ) );
 					if( backwards[i].isComplete() ) {
 						move = false;
 						backwards[i].reset();
+						bezierLerp.reset();
 						dir = Direction::forward;
 					}
 				}
+			}
+
+			if( dir == Direction::forward ) {
+				bezier.circle.setPosition( bezierLerp.update(
+					moving[0].circle.getPosition(),
+					moving[1].circle.getPosition(),
+					dt
+				));
+			}
+			else if( dir == Direction::backward ) {
+				bezier.circle.setPosition( bezierLerp.update(
+					moving[1].circle.getPosition(),
+					moving[0].circle.getPosition(),
+					dt
+				));
 			}
 		}
 	}
@@ -129,6 +156,7 @@ private:
 			window.draw( points[i].circle );
 			if( showMoving && i != num_points - 1 ) window.draw( moving[i].circle );
 		}
+		window.draw( bezier.circle );
 
 	ImGui::SFML::Render(window);
 		window.display();

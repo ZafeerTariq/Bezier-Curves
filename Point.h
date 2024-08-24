@@ -7,6 +7,8 @@ class Point {
 public:
 	sf::CircleShape circle;
 
+	Point() {}
+
 	Point( sf::Vector2f position, float radius ) {
 		circle = sf::CircleShape( radius );
 		circle.setPosition( position );

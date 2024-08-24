@@ -9,6 +9,8 @@ private:
 	float t;
 	float duration;
 public:
+	Lerp() {}
+
 	Lerp( T a, T b, float duration = 1.0f ) {
 		this->a = a;
 		this->b = b;
@@ -26,6 +28,10 @@ public:
 
 	void reset() {
 		t = 0;
+	}
+
+	bool isComplete() {
+		return t >= 1.0f;
 	}
 };
 

@@ -31,6 +31,8 @@ private:
 	Lerp<sf::Vector2f> *forwards;
 	Lerp<sf::Vector2f> *backwards;
 
+	bool showMoving = true;
+
 public:
 	Bezier() {
 		init();
@@ -61,15 +63,28 @@ public:
 		while( window.isOpen() ) {
 			sf::Event event;
 			while ( window.pollEvent( event ) ) {
+				ImGui::SFML::ProcessEvent( window, event );
 				if ( event.type == sf::Event::Closed ) {
 					window.close();
 				}
 			}
 
+			ImGui::SFML::Update( window, deltaTime );
+			ImGui::Begin( "Menu" );
+				ImGui::Checkbox( "show moving points", &showMoving );
+			ImGui::End();
+
 			deltaTime = clock.restart();
 			update( deltaTime.asSeconds() );
 			draw();
 		}
+
+		ImGui::SFML::Shutdown();
+
+		delete[] points;
+		delete[] moving;
+		delete[] forwards;
+		delete[] backwards;
 	}
 
 private:
@@ -112,9 +127,10 @@ private:
 
 		for (size_t i = 0; i < num_points; i++) {
 			window.draw( points[i].circle );
-			if( i != num_points - 1 ) window.draw( moving[i].circle );
+			if( showMoving && i != num_points - 1 ) window.draw( moving[i].circle );
 		}
 
+	ImGui::SFML::Render(window);
 		window.display();
 	}
 };

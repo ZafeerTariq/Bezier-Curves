@@ -33,6 +33,7 @@ private:
 	LerpGeneric<sf::Vector2f> lerp;
 
 	bool showMoving = true;
+	float duration = 1.0f;
 
 public:
 	Bezier() {
@@ -63,7 +64,10 @@ public:
 			ImGui::SFML::Update( window, deltaTime );
 			ImGui::Begin( "Menu" );
 				ImGui::Checkbox( "show moving points", &showMoving );
+				ImGui::SliderFloat( "duration", &duration, 0.0f, 20.0f );
 			ImGui::End();
+
+			lerp.set_duration( duration );
 
 			deltaTime = clock.restart();
 			update( deltaTime.asSeconds() );

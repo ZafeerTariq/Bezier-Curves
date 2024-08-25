@@ -34,6 +34,10 @@ public:
 		}
 	}
 
+	void set_duration( float duration ) {
+		this->duration = duration;
+	}
+
 	void reset() {
 		t = 0;
 	}

@@ -13,8 +13,6 @@
 #define SCREEN_WIDTH 1600
 #define SCREEN_HEIGHT 900
 
-#define num_points 4
-
 enum Direction { forward, backward };
 
 class Bezier {
@@ -33,6 +31,8 @@ private:
 
 	bool showMoving = true;
 	float duration = 1.0f;
+	int num_points = 4;
+	int next_num_points = 4;
 
 public:
 	Bezier() {
@@ -60,9 +60,14 @@ public:
 				}
 			}
 
+			if( num_points != next_num_points ) {
+				grow_points( next_num_points - num_points );
+			}
+
 			ImGui::SFML::Update( window, deltaTime );
 			ImGui::Begin( "Menu" );
 				ImGui::Checkbox( "show moving points", &showMoving );
+				ImGui::SliderInt( "points", &next_num_points, 2, 9 );
 				ImGui::SliderFloat( "duration", &duration, 0.0f, 20.0f );
 
 				for( size_t i = 0; i < num_points; i++ ) {
@@ -91,13 +96,6 @@ public:
 
 private:
 	void init() {
-		if( points ) {
-			for( size_t i = 0; i < num_points - 1; i++ ) {
-				delete[] points[i];
-			}
-			delete[] points;
-		}
-
 		points = new Point*[num_points - 1];
 
 		points[0] = new Point[num_points];
@@ -109,9 +107,39 @@ private:
 		for( size_t i = 1; i < num_points - 1; i++ ) {
 			points[i] = new Point[num_points - i];
 			for( size_t j = 0; j < num_points - i; j++ ) {
-				points[i][j] = Point( points[0][j].circle.getPosition(), 15 - i * 2 );
+				points[i][j] = Point( points[0][j].position, 15 - i * 2 );
 			}
 		}
+	}
+
+	void grow_points( int size ) {
+		Point **temp = new Point*[num_points + size - 1];
+		temp[0] = new Point[num_points + size];
+
+		int size_to_copy = size > 0 ? num_points : num_points + size;
+		// copy original points control points
+		for( size_t i = 0; i < size_to_copy; i++ ) {
+			temp[0][i] = points[0][i];
+		}
+		// set the newly added control points to ( 0, 0 )
+		for( size_t i = num_points; i < num_points + size; i++ ) {
+			temp[0][i] = Point( sf::Vector2f( 0, 0 ), 10 );
+		}
+
+		for( size_t i = 1; i < num_points + size - 1; i++ ) {
+			temp[i] = new Point[num_points + size - 1];
+			for( size_t j = 0; j < num_points + size - i; j++ ) {
+				temp[i][j] = Point( temp[0][j].position, 15 - i * 2 );
+			}
+		}
+
+		for( size_t i = 0; i < num_points - 1; i++ ) {
+			delete[] points[i];
+		}
+		delete[] points;
+
+		points = temp;
+		num_points += size;
 	}
 
 	void update( float dt ) {

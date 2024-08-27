@@ -67,12 +67,6 @@ public:
 				}
 			}
 
-			if( num_points != next_num_points ) {
-				grow_points( next_num_points - num_points );
-			}
-
-			calculate_curve();
-
 			ImGui::SFML::Update( window, deltaTime );
 			ImGui::Begin( "Menu" );
 				ImGui::Checkbox( "show moving points", &showMoving );
@@ -124,6 +118,88 @@ private:
 		}
 	}
 
+	void draw() {
+		window.clear( sf::Color( 32, 32, 32, 255 ) );
+
+		for (size_t i = 0; i < num_points - 1; i++) {
+			if( i == 0 || showMoving ) {
+				for( size_t j = 0 ; j < num_points - i; j++ ) {
+					window.draw( points[i][j].circle );
+				}
+			}
+		}
+		window.draw( bezier.circle );
+
+		for( size_t i = 0; i < resolution; i++ ) {
+			sf::RectangleShape texel( sf::Vector2f( 10, 10 ) );
+			texel.setPosition( curve[i] );
+			window.draw( texel );
+		}
+
+		ImGui::SFML::Render(window);
+		window.display();
+	}
+
+	void update( float dt ) {
+		if( num_points != next_num_points ) {
+			grow_points( next_num_points - num_points );
+		}
+
+		calculate_curve();
+
+		if( sf::Keyboard::isKeyPressed( sf::Keyboard::Space ) && !move || move ) {
+			move = true;
+
+			update_points( lerp.get_t() );
+			update_bezier();
+
+			lerp.update_time( dt );
+			if( lerp.isComplete() ) {
+				move = false;
+				lerp.reset();
+				dir = dir == Direction::forward ? Direction::backward : Direction::forward;
+			}
+		}
+	}
+
+	void update_points( float t ) {
+		for( size_t i = 1; i < num_points - 1; i++ ) {
+			for( size_t j = 0; j < num_points - i; j++ ) {
+				if( dir == Direction::forward ) {
+					points[i][j].set_position(
+						interpolate_points( i - 1, j, i - 1, j + 1, t )
+					);
+				}
+				else if ( dir == Direction::backward ) {
+					points[i][j].set_position(
+						interpolate_points( i - 1, j + 1, i - 1, j, t )
+					);
+				}
+			}
+		}
+	}
+
+	void update_bezier() {
+		if( dir == Direction::forward ) {
+			bezier.set_position(
+				interpolate_points( num_points - 2, 0, num_points - 2, 1, lerp.get_t() )
+			);
+		}
+		else if ( dir == Direction::backward ) {
+			bezier.set_position(
+				interpolate_points( num_points - 2, 1, num_points - 2, 0, lerp.get_t() )
+			);
+		}
+	}
+
+	sf::Vector2f interpolate_points( size_t from_i, size_t from_j, size_t to_i, size_t to_j, float t ) {
+		return Lerp<sf::Vector2f>::lerp(
+			points[from_i][from_j].circle.getPosition(),
+			points[to_i][to_j].circle.getPosition(),
+			t
+		);
+	}
+
 	void grow_points( int size ) {
 		Point **temp = new Point*[num_points + size - 1];
 		temp[0] = new Point[num_points + size];
@@ -166,76 +242,8 @@ private:
 				}
 			}
 
-			curve[t] = ( Lerp<sf::Vector2f>::lerp(
-				points[num_points - 2][0].circle.getPosition(),
-				points[num_points - 2][1].circle.getPosition(),
-				t / (float)resolution
-			) );
+			curve[t] = interpolate_points( num_points - 2, 0, num_points - 2, 1, t / (float)resolution );
 		}
-	}
-
-	void update( float dt ) {
-		if( sf::Keyboard::isKeyPressed( sf::Keyboard::Space ) && !move || move ) {
-			move = true;
-			for( size_t i = 1; i < num_points - 1; i++ ) {
-				for( size_t j = 0; j < num_points - i; j++ ) {
-					if( dir == Direction::forward ) {
-						points[i][j].set_position( lerp.get(
-							points[i - 1][j].circle.getPosition(),
-							points[i - 1][j + 1].circle.getPosition()
-						) );
-					}
-					else if ( dir == Direction::backward ) {
-						points[i][j].set_position( lerp.get(
-							points[i - 1][j + 1].circle.getPosition(),
-							points[i - 1][j].circle.getPosition()
-						) );
-					}
-				}
-			}
-
-			if( dir == Direction::forward ) {
-				bezier.set_position( lerp.get(
-					points[num_points - 2][0].circle.getPosition(),
-					points[num_points - 2][1].circle.getPosition()
-				) );
-			}
-			else if ( dir == Direction::backward ) {
-				bezier.set_position( lerp.get(
-					points[num_points - 2][1].circle.getPosition(),
-					points[num_points - 2][0].circle.getPosition()
-				) );
-			}
-
-			lerp.update_time( dt );
-			if( lerp.isComplete() ) {
-				move = false;
-				lerp.reset();
-				dir = dir == Direction::forward ? Direction::backward : Direction::forward;
-			}
-		}
-	}
-
-	void draw() {
-		window.clear( sf::Color( 32, 32, 32, 255 ) );
-
-		for (size_t i = 0; i < num_points - 1; i++) {
-			if( i == 0 || showMoving ) {
-				for( size_t j = 0 ; j < num_points - i; j++ ) {
-					window.draw( points[i][j].circle );
-				}
-			}
-		}
-		window.draw( bezier.circle );
-
-		for( size_t i = 0; i < resolution; i++ ) {
-			sf::RectangleShape texel( sf::Vector2f( 10, 10 ) );
-			texel.setPosition( curve[i] );
-			window.draw( texel );
-		}
-
-		ImGui::SFML::Render(window);
-		window.display();
 	}
 };
 

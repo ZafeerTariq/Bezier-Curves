@@ -32,7 +32,7 @@ public:
 		return b;
 	}
 
-	T get_t() {
+	float get_t() {
 		return t;
 	}
 

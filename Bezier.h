@@ -2,6 +2,7 @@
 #define BEZIER_H
 
 #include <iostream>
+#include <math.h>
 #include <SFML/Graphics.hpp>
 
 #include "imgui/imgui.h"
@@ -29,6 +30,9 @@ private:
 
 	LerpGeneric<sf::Vector2f> lerp;
 
+	sf::Vector2f *curve;
+	int resolution = 1000;
+
 	bool showMoving = true;
 	float duration = 1.0f;
 	int num_points = 4;
@@ -48,6 +52,9 @@ public:
 		dir = Direction::forward;
 
 		bezier = Point( points[0][0].circle.getPosition(), 25 );
+		curve = new sf::Vector2f[resolution];
+
+		calculate_curve();
 	}
 
 	void run() {
@@ -64,12 +71,16 @@ public:
 				grow_points( next_num_points - num_points );
 			}
 
+			calculate_curve();
+
 			ImGui::SFML::Update( window, deltaTime );
 			ImGui::Begin( "Menu" );
 				ImGui::Checkbox( "show moving points", &showMoving );
-				ImGui::SliderInt( "points", &next_num_points, 2, 9 );
+				ImGui::SliderInt( "curve resolution", &resolution, 10, 1000 );
 				ImGui::SliderFloat( "duration", &duration, 0.0f, 20.0f );
+				ImGui::SliderInt( "points", &next_num_points, 2, 9 );
 
+				ImGui::Text( "points positions" );
 				for( size_t i = 0; i < num_points; i++ ) {
 					std::string point = "p" + std::to_string( i );
 					ImGui::SliderFloat( ( point + "x" ).c_str(), &points[0][i].position.x, 0, SCREEN_WIDTH );
@@ -91,6 +102,7 @@ public:
 			delete[] points[i];
 		}
 		delete[] points;
+		delete[] curve;
 		std::cout << "Freed memory, exiting" << std::endl;
 	}
 
@@ -140,6 +152,26 @@ private:
 
 		points = temp;
 		num_points += size;
+	}
+
+	void calculate_curve() {
+		for( size_t t = 0; t < resolution; t++ ) {
+			for( size_t i = 1; i < num_points - 1; i++ ) {
+				for( size_t j = 0; j < num_points - i; j++ ) {
+					points[i][j].set_position( Lerp<sf::Vector2f>::lerp(
+						points[i - 1][j].circle.getPosition(),
+						points[i - 1][j + 1].circle.getPosition(),
+						t / (float)resolution
+					) );
+				}
+			}
+
+			curve[t] = ( Lerp<sf::Vector2f>::lerp(
+				points[num_points - 2][0].circle.getPosition(),
+				points[num_points - 2][1].circle.getPosition(),
+				t / (float)resolution
+			) );
+		}
 	}
 
 	void update( float dt ) {
@@ -195,6 +227,12 @@ private:
 			}
 		}
 		window.draw( bezier.circle );
+
+		for( size_t i = 0; i < resolution; i++ ) {
+			sf::RectangleShape texel( sf::Vector2f( 10, 10 ) );
+			texel.setPosition( curve[i] );
+			window.draw( texel );
+		}
 
 		ImGui::SFML::Render(window);
 		window.display();

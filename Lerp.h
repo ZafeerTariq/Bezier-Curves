@@ -13,19 +13,27 @@ public:
 		this->duration = duration;
 	}
 
+	static T lerp( T a, T b, float t ) {
+		return a + ( b - a ) * t;
+	}
+
 	T update( T a, T b, float dt ) {
 		if( t < 1.0f ) {
 			t += dt / duration;
-			return a + ( b - a ) * t;
+			return lerp( a, b, t );
 		}
 		return b;
 	}
 
 	T get( T a, T b ) {
 		if( t < 1.0f ) {
-			return a + ( b - a ) * t;
+			return lerp( a, b, t );
 		}
 		return b;
+	}
+
+	T get_t() {
+		return t;
 	}
 
 	void update_time( float dt ) {

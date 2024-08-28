@@ -10,11 +10,12 @@ public:
 
 	Point() {}
 
-	Point( sf::Vector2f position, float radius ) {
+	Point( sf::Vector2f position, float radius, sf::Color color = sf::Color::White ) {
 		this->position = position;
 		circle = sf::CircleShape( radius );
 		circle.setPosition( position );
 		circle.setOrigin( radius, radius );
+		circle.setFillColor( color );
 	}
 
 	void set_position( sf::Vector2f position ) {

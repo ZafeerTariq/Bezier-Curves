@@ -33,7 +33,7 @@ private:
 	sf::Vector2f *curve;
 	int resolution = 1000;
 
-	bool showMoving = true;
+	bool showMoving = false;
 	float duration = 1.0f;
 	int num_points = 4;
 	int next_num_points = 4;
@@ -51,7 +51,7 @@ public:
 		move = false;
 		dir = Direction::forward;
 
-		bezier = Point( points[0][0].circle.getPosition(), 25 );
+		bezier = Point( points[0][0].circle.getPosition(), 25, sf::Color( 50,184,251 ) );
 		curve = new sf::Vector2f[resolution];
 
 		calculate_curve();
@@ -105,21 +105,22 @@ private:
 		points = new Point*[num_points - 1];
 
 		points[0] = new Point[num_points];
-		points[0][0] = Point( sf::Vector2f( 0, 450 ), 10 );
-		points[0][1] = Point( sf::Vector2f( 480, 828 ), 10 );
-		points[0][2] = Point( sf::Vector2f( 1584, 90 ), 10 );
-		points[0][3] = Point( sf::Vector2f( 1046, 748.8 ), 10 );
+		points[0][0] = Point( sf::Vector2f( 0, 450 ), 20, sf::Color( 17,253,169 ) );
+		points[0][1] = Point( sf::Vector2f( 480, 828 ), 20, sf::Color( 17,253,169 ) );
+		points[0][2] = Point( sf::Vector2f( 1584, 90 ), 20, sf::Color( 17,253,169 ) );
+		points[0][3] = Point( sf::Vector2f( 1046, 748.8 ), 20, sf::Color( 17,253,169 ) );
 
 		for( size_t i = 1; i < num_points - 1; i++ ) {
 			points[i] = new Point[num_points - i];
 			for( size_t j = 0; j < num_points - i; j++ ) {
-				points[i][j] = Point( points[0][j].position, 15 - i * 2 );
+				points[i][j] = Point( points[0][j].position, 15 - i * 2, sf::Color( 255,140,17 ) );
 			}
 		}
 	}
 
 	void draw() {
-		window.clear( sf::Color( 32, 32, 32, 255 ) );
+		// window.clear( sf::Color( color[0] * 255, color[1] * 255, color[2] * 255 ) );
+		window.clear( sf::Color( 33, 22, 40 ) );
 
 		for (size_t i = 0; i < num_points - 1; i++) {
 			if( i == 0 || showMoving ) {
@@ -128,13 +129,15 @@ private:
 				}
 			}
 		}
-		window.draw( bezier.circle );
 
 		for( size_t i = 0; i < resolution; i++ ) {
 			sf::RectangleShape texel( sf::Vector2f( 10, 10 ) );
 			texel.setPosition( curve[i] );
+			texel.setFillColor( sf::Color( 254,17,85 ) );
 			window.draw( texel );
 		}
+
+		window.draw( bezier.circle );
 
 		ImGui::SFML::Render(window);
 		window.display();
@@ -211,7 +214,7 @@ private:
 		}
 		// set the newly added control points to ( 0, 0 )
 		for( size_t i = num_points; i < num_points + size; i++ ) {
-			temp[0][i] = Point( sf::Vector2f( 0, 0 ), 10 );
+			temp[0][i] = Point( sf::Vector2f( 0, 0 ), 20, sf::Color( 17,253,169 ) );
 		}
 
 		for( size_t i = 1; i < num_points + size - 1; i++ ) {

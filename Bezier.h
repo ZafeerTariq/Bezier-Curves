@@ -220,7 +220,7 @@ private:
 		for( size_t i = 1; i < num_points + size - 1; i++ ) {
 			temp[i] = new Point[num_points + size - 1];
 			for( size_t j = 0; j < num_points + size - i; j++ ) {
-				temp[i][j] = Point( temp[0][j].position, 15 - i * 2 );
+				temp[i][j] = Point( temp[0][j].position, 15 - i * 2, sf::Color( 255,140,17 ) );
 			}
 		}
 
